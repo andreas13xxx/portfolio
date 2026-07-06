@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.swt.patch"
       label="SWT Patch for Portfolio Performance"
-      version="0.84.2.qualifier"
+      version="0.84.3.qualifier"
       provider-name="Portfolio Performance">
 
    <!--
@@ -22,7 +22,7 @@
       The org.eclipse.e4.rcp version below must be bumped on each platform upgrade.
    -->
    <requires>
-      <import feature="org.eclipse.e4.rcp" version="4.38.0.v20251126-0427" patch="true"/>
+      <import feature="org.eclipse.e4.rcp" version="4.40.0.v20260516-1214" patch="true"/>
    </requires>
 
    <plugin

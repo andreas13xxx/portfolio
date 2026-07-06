@@ -6,6 +6,7 @@ import static name.abuchen.portfolio.util.TextUtil.trim;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -303,11 +304,16 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // Tencent Holdings Ltd. 0,3773 titre(s) 53,00 EUR 20,00 EUR
                                         // zjBAM Corp. 125 Pz. 29,75 EUR 3.718,75 EUR
                                         // Vonovia SE 0,781379 tít. 24,06 EUR 18,80 EUR
+                                        // Lev MSCI USA EUR (Acc) 200 Stk. 26 EUR
                                         // @formatter:on
                                         section -> section //
-                                                        .attributes("shares") //
-                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.|t.t\\.) .*$") //
-                                                        .assign((t, v) -> t.setShares(asShares(v.get("shares")))),
+                                                        .attributes("shares", "sample") //
+                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.|t.t\\.) (.* )?(?<sample>[\\.,'\\d]+) [A-Z]{3}$") //
+                                                        .assign((t, v) -> {
+                                                            // use the monetary amount to detect the format for the shares
+                                                            var locale = ExtractorUtils.guessNumberLocale(v.get("sample"), Locale.GERMANY);
+                                                            t.setShares(asShares(v.get("shares"), locale));
+                                                        }),
                                         // @formatter:off
                                         // Berkshire Hathaway Inc. 0.3367 Pcs. 297.00 EUR 100.00 EUR
                                         // @formatter:on
@@ -426,10 +432,20 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("date") //
-                                                        .match("^Ausf.hrung von (Round up|Saveback) .* "
+                                                        .match("^Ausf.hrung von (Round up|Saveback) \\D* "
                                                                         + "(?<date>([\\d]{2}\\.[\\d]{2}\\.[\\d]{4}"
                                                                         + "|[\\d]{4}\\-[\\d]{2}\\-[\\d]{2})) .*$") //
                                                         .assign((t, v) -> t.setDate(asDate(v.get("date")))),
+                                        // @formatter:off
+                                        // Ausführung der Zeichnungsorder am 12.06.2026 um 13:28 am Primärmarkt.
+                                        // @formatter:on
+                                        section -> section //
+                                                        .attributes("date", "time") //
+                                                        .match("^Ausf.hrung der Zeichnungsorder am "
+                                                                        + "(?<date>([\\d]{2}\\.[\\d]{2}\\.[\\d]{4}"
+                                                                        + "|[\\d]{4}\\-[\\d]{2}\\-[\\d]{2})) um (?<time>\\d{2}\\:\\d{2}).*$") //
+                                                        .assign((t, v) -> t
+                                                                        .setDate(asDate(v.get("date"), v.get("time")))),
                                         // @formatter:off
                                         // Ejecución del Saveback el 02.02.2026 en Lang und Schwarz Exchange.
                                         // @formatter:on
@@ -895,9 +911,13 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // Vonovia SE 0,781379 tít. 24,06 EUR 18,80 EUR
                                         // @formatter:on
                                         section -> section //
-                                                        .attributes("shares") //
-                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.|t.t\\.) .*$") //
-                                                        .assign((t, v) -> t.setShares(asShares(v.get("shares")))),
+                                                        .attributes("shares", "sample") //
+                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.|t.t\\.) (.* )?(?<sample>[\\.,'\\d]+) [A-Z]{3}$") //
+                                                        .assign((t, v) -> {
+                                                            // use the monetary amount to detect the format for the shares
+                                                            var locale = ExtractorUtils.guessNumberLocale(v.get("sample"), Locale.GERMANY);
+                                                            t.setShares(asShares(v.get("shares"), locale));
+                                                        }),
                                         // @formatter:off
                                         // Berkshire Hathaway Inc. 0.3367 Pcs. 297.00 EUR 100.00 EUR
                                         // @formatter:on
@@ -1247,7 +1267,7 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
 
     private void addDividendTransaction()
     {
-        final var type = new DocumentType("(?i)(AUSSCH.TTUNG" //
+        final var type = new DocumentType("(?im)^(AUSSCH.TTUNG" //
                         + "|(STORNIERUNG DER )?DIVIDENDE( EN ESP.CES)?" //
                         + "|REINVESTIERUNG" //
                         + "|STORNO DIVIDENDE" //
@@ -1422,9 +1442,13 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // Apple Inc. 0.0929 Pcs. 0.24 USD 0.02 USD
                                         // @formatter:on
                                         section -> section //
-                                                        .attributes("shares") //
-                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.) [\\.,\\d]+ [A-Z]{3} [\\.,\\d]+ [A-Z]{3}$") //
-                                                        .assign((t, v) -> t.setShares(asShares(v.get("shares")))),
+                                                        .attributes("shares", "sample") //
+                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.) [\\.,\\d]+ [A-Z]{3} (?<sample>[\\.,\\d]+) [A-Z]{3}$") //
+                                                        .assign((t, v) -> {
+                                                            // use the monetary amount to detect the format for the shares
+                                                            var locale = ExtractorUtils.guessNumberLocale(v.get("sample"), Locale.GERMANY);
+                                                            t.setShares(asShares(v.get("shares"), locale));
+                                                        }),
                                         // @formatter:off
                                         // IE00BK1PV551 123 Stücke 0.36 USD
                                         // NL0011683594 90.537929 Stücke 0.87 EUR
@@ -1708,7 +1732,7 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
 
     private void addAdvanceTaxTransaction()
     {
-        final var type = new DocumentType("Vorabpauschale", "KONTO.BERSICHT");
+        final var type = new DocumentType("Vorabpauschale", "KONTO.BERSICHT|WERTPAPIERABRECHNUNG");
         this.addDocumentTyp(type);
 
         var pdfTransaction = new Transaction<AccountTransaction>();
@@ -4299,9 +4323,13 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // Vonovia SE 0,781379 tít. 24,06 EUR 18,80 EUR
                                         // @formatter:on
                                         section -> section //
-                                                        .attributes("shares") //
-                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.|t.t\\.) .*$") //
-                                                        .assign((t, v) -> t.setShares(asShares(v.get("shares")))),
+                                                        .attributes("shares", "sample") //
+                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.|t.t\\.) (.* )?(?<sample>[\\.,'\\d]+) [A-Z]{3}$") //
+                                                        .assign((t, v) -> {
+                                                            // use the monetary amount to detect the format for the shares
+                                                            var locale = ExtractorUtils.guessNumberLocale(v.get("sample"), Locale.GERMANY);
+                                                            t.setShares(asShares(v.get("shares"), locale));
+                                                        }),
                                         // @formatter:off
                                         // Berkshire Hathaway Inc. 0.3367 Pcs. 297.00 EUR 100.00 EUR
                                         // @formatter:on
@@ -4419,10 +4447,23 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("date") //
-                                                        .match("^Ausf.hrung von (Round up|Saveback) .* "
+                                                        .match("^Ausf.hrung von (Round up|Saveback) \\D* "
                                                                         + "(?<date>([\\d]{2}\\.[\\d]{2}\\.[\\d]{4}"
                                                                         + "|[\\d]{4}\\-[\\d]{2}\\-[\\d]{2})) .*$") //
                                                         .assign((t, v) -> t.setDateTime(asDate(v.get("date")))),
+
+                                        // @formatter:off
+                                        // Ausführung der Zeichnungsorder am 12.06.2026 um 13:28 am Primärmarkt.
+                                        // @formatter:on
+                                        section -> section //
+                                                        .attributes("date", "time") //
+                                                        .match("^Ausf.hrung der Zeichnungsorder am "
+                                                                        + "(?<date>([\\d]{2}\\.[\\d]{2}\\.[\\d]{4}"
+                                                                        + "|[\\d]{4}\\-[\\d]{2}\\-[\\d]{2})) um (?<time>\\d{2}\\:\\d{2}).*$") //
+                                                        .assign((t, v) -> t
+                                                                        .setDateTime(asDate(v.get("date"),
+                                                                                        v.get("time")))),
+
                                         // @formatter:off
                                         // Ejecución del Saveback el 02.02.2026 en Lang und Schwarz Exchange.
                                         // @formatter:on
@@ -4661,9 +4702,13 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                                         // Apple Inc. 1,92086 titre(s) 0,25 USD 0,48 USD
                                         // @formatter:on
                                         section -> section //
-                                                        .attributes("shares") //
-                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.) [\\.,\\d]+ [A-Z]{3} [\\.,\\d]+ [A-Z]{3}$") //
-                                                        .assign((t, v) -> t.setShares(asShares(v.get("shares")))),
+                                                        .attributes("shares", "sample") //
+                                                        .match("^.* (?<shares>[\\.,\\d]+) (Stk\\.|titre\\(s\\)|Pz\\.) [\\.,\\d]+ [A-Z]{3} (?<sample>[\\.,\\d]+) [A-Z]{3}$") //
+                                                        .assign((t, v) -> {
+                                                            // use the monetary amount to detect the format for the shares
+                                                            var locale = ExtractorUtils.guessNumberLocale(v.get("sample"), Locale.GERMANY);
+                                                            t.setShares(asShares(v.get("shares"), locale));
+                                                        }),
                                         // @formatter:off
                                         // IE00BK1PV551 123 Stücke 0.36 USD
                                         // NL0011683594 90.537929 Stücke 0.87 EUR
@@ -4987,6 +5032,17 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
                         })
 
                         // @formatter:off
+                        // Abwicklungskostenpauschale -1,00 EUR
+                        // Abwicklungspauschale -1,00 EUR
+                        // @formatter:on
+                        .section("fee", "currency").optional() //
+                        .match("^Abwicklungs(kosten)?pauschale \\-(?<fee>[\\.,\\d]+) (?<currency>[A-Z]{3})$") //
+                        .assign((t, v) -> {
+                            if (!type.getCurrentContext().getBoolean("negative"))
+                                processFeeEntries(t, v, type);
+                        })
+
+                        // @formatter:off
                         // Fremde Spesen -0,12 USD
                         // @formatter:on
                         .section("fee", "currency").optional() //
@@ -5092,48 +5148,20 @@ public class TradeRepublicPDFExtractor extends AbstractPDFExtractor
     @Override
     protected long asShares(String value)
     {
-        if (value.matches("^(0\\.\\d+|\\d+\\.\\d{1,2}|\\d+\\.\\d{4,})$"))
-        {
-            return asShares(value, "en", "US"); //
-        }
         return super.asShares(value);
     }
 
     @Override
     protected long asAmount(String value)
     {
-        var language = "de";
-        var country = "DE";
-
-        var lastDot = value.lastIndexOf(".");
-        var lastComma = value.lastIndexOf(",");
-
-        // returns the greater of two int values
-        if (Math.max(lastDot, lastComma) == lastDot)
-        {
-            language = "en";
-            country = "US";
-        }
-
-        return ExtractorUtils.convertToNumberLong(value, Values.Amount, language, country);
+        return ExtractorUtils.convertToNumberLong(value, Values.Amount,
+                        ExtractorUtils.guessNumberLocale(value, Locale.GERMANY));
     }
 
     @Override
     protected BigDecimal asExchangeRate(String value)
     {
-        var language = "de";
-        var country = "DE";
-
-        var lastDot = value.lastIndexOf(".");
-        var lastComma = value.lastIndexOf(",");
-
-        // returns the greater of two int values
-        if (Math.max(lastDot, lastComma) == lastDot)
-        {
-            language = "en";
-            country = "US";
-        }
-
-        return ExtractorUtils.convertToNumberBigDecimal(value, Values.Share, language, country);
+        return ExtractorUtils.convertToNumberBigDecimal(value, Values.Share,
+                        ExtractorUtils.guessNumberLocale(value, Locale.GERMANY));
     }
 }

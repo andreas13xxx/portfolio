@@ -5,7 +5,7 @@
 
 	<groupId>name.abuchen.portfolio</groupId>
 	<artifactId>portfolio-app</artifactId>
-	<version>0.84.2-SNAPSHOT</version>
+	<version>0.84.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<name>Portfolio Performance</name>
@@ -73,7 +73,7 @@
 		<repository>
 			<id>swt-portfolio-fork</id>
 			<layout>p2</layout>
-			<url>https://portfolio-performance.github.io/eclipse.platform.swt-fork-update-site/R4_38/</url>
+			<url>https://portfolio-performance.github.io/eclipse.platform.swt-fork-update-site/R4_40/</url>
 		</repository>
 	</repositories>
 
@@ -583,7 +583,7 @@
 						<dependency>
 							<groupId>com.puppycrawl.tools</groupId>
 							<artifactId>checkstyle</artifactId>
-							<version>13.5.0</version>
+							<version>13.7.0</version>
 						</dependency>
 					</dependencies>
 					<executions>

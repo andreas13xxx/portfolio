@@ -16,6 +16,7 @@ public class BundleMessages
             String importTaxonomy = "command.import.taxonomy"; // NOSONAR
             String exportTaxonomy = "command.export.taxonomy"; // NOSONAR
             String backfillExDate = "command.backfillExDates.name"; // NOSONAR
+            String createSingleSecurityDebugFile = "command.tools.createSingleSecurityDebugFile.name"; // NOSONAR
         }
     }
 

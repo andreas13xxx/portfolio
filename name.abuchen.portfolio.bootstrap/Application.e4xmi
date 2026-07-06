@@ -56,6 +56,7 @@
           <children xsi:type="menu:MenuSeparator" xmi:id="__mE8gOIVEe6pEIPYaDGzWA" elementId="name.abuchen.portfolio.bootstrap.menuseparator.9"/>
           <children xsi:type="menu:HandledMenuItem" xmi:id="_9Js00EzWEfCcpO9Ays2KhA" elementId="name.abuchen.portfolio.ui.menu.tools.migratePortfolioReportHandler" label="%command.tools.migratePortfolioReport.name" command="_gfBZEEzWEfCcpO9Ays2KhA"/>
           <children xsi:type="menu:HandledMenuItem" xmi:id="_AR9yIOIWEe6pEIPYaDGzWA" elementId="name.abuchen.portfolio.ui.menu.file.restoresourceattribute" label="%command.fix.restoresourceattribute" command="_FunoEOIWEe6pEIPYaDGzWA"/>
+          <children xsi:type="menu:HandledMenuItem" xmi:id="_CreateSingleSecurityDebugFileMenuItem" elementId="name.abuchen.portfolio.ui.menu.tools.createSingleSecurityDebugFile" label="%command.tools.createSingleSecurityDebugFile.name" command="_CreateSingleSecurityDebugFileCommand"/>
         </children>
         <children xsi:type="menu:MenuSeparator" xmi:id="_O_UqkBfWEeOders_POVQHQ" elementId="name.abuchen.portfolio.ui.menuseparator.1"/>
         <children xsi:type="menu:Menu" xmi:id="_mF9JAEYQEeSRXYVe298mXg" elementId="name.abuchen.portfolio.ui.menu.file.import" label="%command.import.name" iconURI="platform:/plugin/name.abuchen.portfolio.ui/icons/import_file.png">
@@ -215,6 +216,7 @@
   <handlers xmi:id="_ytClQNoAEe2p9IMNrIn2tQ" elementId="name.abuchen.portfolio.ui.handler.uploadToMyDividends24" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.UploadToMyDividends24Handler" command="_61mn0NoAEe2p9IMNrIn2tQ"/>
   <handlers xmi:id="_pXfGIBJeEe6zcsTRWurRkg" elementId="name.abuchen.portfolio.ui.handler.newDomainElement" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.NewDomainElementHandler" command="_bzKa8BJdEe6zcsTRWurRkg"/>
   <handlers xmi:id="_WsrrsOIWEe6pEIPYaDGzWA" elementId="name.abuchen.portfolio.ui.handler.restoresourceattribute" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.tools.RestoreSourceAttributeHandler" command="_FunoEOIWEe6pEIPYaDGzWA"/>
+  <handlers xmi:id="_CreateSingleSecurityDebugFileHandler" elementId="name.abuchen.portfolio.ui.handler.createSingleSecurityDebugFile" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.tools.CreateSingleSecurityDebugFileHandler" command="_CreateSingleSecurityDebugFileCommand"/>
   <handlers xmi:id="_In2tQGJCEe-2EbXDPkYHbQ" elementId="name.abuchen.portfolio.ui.handler.focussearch" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.FocusSearchBarHandler" command="_Ca3mkGJCEe-2EbXDPkYHbQ"/>
   <handlers xmi:id="_C5Rd4M8vEe-ZgKOG6pCmYQ" elementId="name.abuchen.portfolio.ui.handler.import.pdf.create-diff" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.CreateDiffFromPDFHandler" command="_0BsloM8uEe-ZgKOG6pCmYQ"/>
   <handlers xmi:id="_aeDVIEzWEfCcpO9Ays2KhA" elementId="name.abuchen.portfolio.ui.handlers.tools.migratePortfolioReportHandler" contributionURI="bundleclass://name.abuchen.portfolio.ui/name.abuchen.portfolio.ui.handlers.tools.MigratePortfolioReportHandler" command="_gfBZEEzWEfCcpO9Ays2KhA"/>
@@ -329,6 +331,7 @@
     <parameters xmi:id="_gu244BJdEe6zcsTRWurRkg" elementId="name.abuchen.portfolio.ui.param.type" name="type" optional="false"/>
   </commands>
   <commands xmi:id="_FunoEOIWEe6pEIPYaDGzWA" elementId="name.abuchen.portfolio.ui.command.restoresourceattribute" commandName="restoresourceattribute"/>
+  <commands xmi:id="_CreateSingleSecurityDebugFileCommand" elementId="name.abuchen.portfolio.ui.command.tools.createSingleSecurityDebugFile" commandName="%command.tools.createSingleSecurityDebugFile.name"/>
   <commands xmi:id="_Ca3mkGJCEe-2EbXDPkYHbQ" elementId="name.abuchen.portfolio.ui.command.focussearch" commandName="focussearch"/>
   <commands xmi:id="_0BsloM8uEe-ZgKOG6pCmYQ" elementId="name.abuchen.portfolio.ui.command.import.pdf.create-diff" commandName="importCommand.pdf.create-diff"/>
   <commands xmi:id="_gfBZEEzWEfCcpO9Ays2KhA" elementId="name.abuchen.portfolio.ui.command.tools.migratePortfolioReportHandler" commandName="migratePortfolioReportHandler"/>

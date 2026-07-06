@@ -10,7 +10,9 @@ import org.osgi.service.event.Event;
 
 import name.abuchen.portfolio.ui.UIConstants;
 import name.abuchen.portfolio.ui.util.Colors;
+import name.abuchen.portfolio.ui.util.DataSeriesColors;
 import name.abuchen.portfolio.ui.util.ValueColorScheme;
+import name.abuchen.portfolio.ui.views.payments.PaymentsPalette;
 
 @SuppressWarnings("restriction")
 public class ThemeAddon
@@ -24,6 +26,8 @@ public class ThemeAddon
     {
         IThemeEngine engine = (IThemeEngine) event.getProperty(IThemeEngine.Events.THEME_ENGINE);
         engine.applyStyles(Colors.theme(), false);
+        engine.applyStyles(DataSeriesColors.instance(), false);
+        engine.applyStyles(PaymentsPalette.instance(), false);
 
         for (var scheme : ValueColorScheme.getAvailableSchemes())
             engine.applyStyles(scheme, false);

@@ -2,6 +2,8 @@ package name.abuchen.portfolio.model;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -660,6 +662,18 @@ public class ClientFactory
         return load(new InputStreamReader(input, StandardCharsets.UTF_8), useIdReferences);
     }
 
+    /**
+     * Creates a faithful, in-memory deep copy of the given client by
+     * serializing it to XML and reading it back. The returned client is fully
+     * independent of the original; mutating it does not affect the original.
+     */
+    public static Client duplicate(Client client) throws IOException
+    {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        new PlainWriter().save(client, out);
+        return load(new ByteArrayInputStream(out.toByteArray()));
+    }
+
     public static void save(final Client client, final File file) throws IOException
     {
         Set<SaveFlag> flags = EnumSet.copyOf(client.getSaveFlags());
@@ -947,6 +961,8 @@ public class ClientFactory
                 removeSourceAttributeFromTaxonomy(client);
             case 68: // NOSONAR
                 // added exDate date field
+            case 69: // NOSONAR
+                // add (optional) weight to client filter
 
                 client.setVersion(Client.CURRENT_VERSION);
                 break;

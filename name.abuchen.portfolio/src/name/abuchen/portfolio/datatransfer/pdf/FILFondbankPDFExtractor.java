@@ -42,7 +42,8 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
 
         Transaction<BuySellEntry> pdfTransaction = new Transaction<>();
 
-        Block firstRelevantLine = new Block("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf|Steuerliche Informationen \\(Einzeltransaktion\\)).*$");
+        Block firstRelevantLine = new Block(
+                        "^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf|Steuerliche Informationen \\(Einzeltransaktion\\)).*$");
         type.addBlock(firstRelevantLine);
         firstRelevantLine.set(pdfTransaction);
 
@@ -63,7 +64,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
 
                         // Is type --> "Verkauf" change from BUY to SELL
                         .section("type").optional() //
-                        .match("^[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}: (?<type>(Kauf( aus VL\\-Sparplan)|Gesamtverkauf)?)$") //
+                        .match("^[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}: (?<type>(Kauf( aus VL\\-Sparplan)|Gesamtverkauf)?)\\s*$") //
                         .assign((t, v) -> {
                             if ("Gesamtverkauf".equals(v.get("type")))
                             {
@@ -79,8 +80,8 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("name", "wkn", "isin", "currency") //
-                                                        .match("^Fondsname \\(WKN \\/ ISIN\\) (?<name>.*) \\((?<wkn>[A-Z0-9]{6}) \\/ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9])\\)$") //
-                                                        .match("^Abrechnungspreis [\\.,\\d]+ (?<currency>[\\w]{3})$") //
+                                                        .match("^Fondsname \\(WKN \\/ ISIN\\) (?<name>.*) \\((?<wkn>[A-Z0-9]{6}) \\/ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9])\\)\\s*$") //
+                                                        .match("^Abrechnungspreis [\\.,\\d]+ (?<currency>[\\w]{3})\\s*$") //
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))),
                                         // @formatter:off
                                         // Kauf UBS Emer.Mkt.Soc.Resp.UETFADIS 89,56 EUR 12,6399 USD 7,728
@@ -88,7 +89,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("name", "currency", "wkn", "isin") //
-                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) ([\\-|\\+])?[\\.,\\d]+$") //
+                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) ([\\-|\\+])?[\\.,\\d]+\\s*$") //
                                                         .match("^[\\d]+ (?<wkn>[A-Z0-9]{6}) \\/ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) .*$") //
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))),
                                         // @formatter:off
@@ -97,7 +98,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("name", "currency", "isin", "wkn") //
-                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) ([\\-|\\+])?[\\.,\\d]+$") //
+                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) ([\\-|\\+])?[\\.,\\d]+\\s*$") //
                                                         .match("^[\\d]+ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) \\/ (?<wkn>[A-Z0-9]{6}) .*$") //
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))))
 
@@ -107,21 +108,21 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("shares") //
-                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? .* ([\\-|\\+])?(?<shares>[\\.,\\d]+)$") //
+                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? .* ([\\-|\\+])?(?<shares>[\\.,\\d]+)\\s*$") //
                                                         .assign((t, v) -> t.setShares(asShares(v.get("shares")))),
                                         // @formatter:off
                                         // Anteile 0,263
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("shares") //
-                                                        .match("^Anteile (?<shares>[\\.,\\d]+)$") //
+                                                        .match("^Anteile (?<shares>[\\.,\\d]+)\\s*$") //
                                                         .assign((t, v) -> t.setShares(asShares(v.get("shares")))))
 
                         // @formatter:off
                         // Handelsuhrzeit 16:51:24
                         // @formatter:on
                         .section("time").optional() //
-                        .match("^Handelsuhrzeit (?<time>[\\d]{2}:[\\d]{2}:[\\d]{2})$") //
+                        .match("^Handelsuhrzeit (?<time>[\\d]{2}:[\\d]{2}:[\\d]{2})\\s*$") //
                         .assign((t, v) -> type.getCurrentContext().put("time", v.get("time")))
 
                         .oneOf( //
@@ -130,7 +131,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("date") //
-                                                        .match("^.*(?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}) [\\.,\\d]+$") //
+                                                        .match("^.*(?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}) [\\.,\\d]+\\s*$") //
                                                         .assign((t, v) -> {
                                                             if (type.getCurrentContext().get("time") != null)
                                                                 t.setDate(asDate(v.get("date"), type.getCurrentContext().get("time")));
@@ -144,7 +145,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("date") //
-                                                        .match("^(?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}): (Kauf( aus VL\\-Sparplan)?|Gesamtverkauf)$") //
+                                                        .match("^(?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}): (Kauf( aus VL\\-Sparplan)?|Gesamtverkauf)\\s*$") //
                                                         .assign((t, v) -> t.setDate(asDate(v.get("date")))))
 
                         // @formatter:off
@@ -154,7 +155,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Abrechnungsbetrag 50,30 EUR (exkl. Kosten)
                         // @formatter:on
                         .section("amount", "currency") //
-                        .match("^(Abrechnungsbetrag|Auszahlungsbetrag) (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})( \\((inkl|exkl)\\. Kosten\\))?$") //
+                        .match("^(Abrechnungsbetrag|Auszahlungsbetrag) (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})( \\((inkl|exkl)\\. Kosten\\))?\\s*$") //
                         .assign((t, v) -> {
                             t.setAmount(asAmount(v.get("amount")));
                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
@@ -173,9 +174,9 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("baseCurrency", "exchangeRate", "fxGross", "termCurrency") //
-                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? .* [\\.,\\d]+ (?<baseCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} ([\\-|\\+])?[\\.,\\d]+$") //
-                                                        .match("^[\\d]+ .* \\/ .* (?<exchangeRate>[\\.,\\d]+) [\\w]{3} [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+$") //
-                                                        .match("^.* (?<fxGross>[\\.,\\d]+) (?<termCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+$") //
+                                                        .match("^(Splittkauf|Splitkauf|Wiederanlage|Kauf|Verkauf)( Betrag)? .* [\\.,\\d]+ (?<baseCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} ([\\-|\\+])?[\\.,\\d]+\\s*$") //
+                                                        .match("^[\\d]+ .* \\/ .* (?<exchangeRate>[\\.,\\d]+) [\\w]{3} [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+\\s*$") //
+                                                        .match("^.* (?<fxGross>[\\.,\\d]+) (?<termCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+\\s*$") //
                                                         .assign((t, v) -> {
                                                             ExtrExchangeRate rate = asExchangeRate(v);
                                                             type.getCurrentContext().putType(rate);
@@ -192,9 +193,9 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("gross", "baseCurrency", "termCurrency", "exchangeRate") //
-                                                        .match("^Abrechnungsbetrag (?<gross>[\\.,\\d]+) (?<baseCurrency>[\\w]{3})( \\(inkl\\. Kosten\\))?$") //
-                                                        .match("^[\\.,\\d]+ (?<termCurrency>[\\w]{3})$") //
-                                                        .match("^Devisenkurs (?<exchangeRate>[\\.,\\d]+)$") //
+                                                        .match("^Abrechnungsbetrag (?<gross>[\\.,\\d]+) (?<baseCurrency>[\\w]{3})( \\(inkl\\. Kosten\\))?\\s*$") //
+                                                        .match("^[\\.,\\d]+ (?<termCurrency>[\\w]{3})\\s*$") //
+                                                        .match("^Devisenkurs (?<exchangeRate>[\\.,\\d]+)\\s*$") //
                                                         .assign((t, v) -> {
                                                             ExtrExchangeRate rate = asExchangeRate(v);
                                                             type.getCurrentContext().putType(rate);
@@ -212,14 +213,14 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("note") //
-                                                        .match("^(?<note>[\\d]+) .* \\/ .* [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+$") //
+                                                        .match("^(?<note>[\\d]+) .* \\/ .* [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+\\s*$") //
                                                         .assign((t, v) -> t.setNote("Auftrags-Nr. " + v.get("note"))),
                                         // @formatter:off
                                         // Auftragsnummer 2616145223
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("note") //
-                                                        .match("^Auftragsnummer (?<note>[\\d]+)$") //
+                                                        .match("^Auftragsnummer (?<note>[\\d]+)\\s*$") //
                                                         .assign((t, v) -> t.setNote("Auftrags-Nr. " + v.get("note"))))
 
                         // @formatter:off
@@ -244,6 +245,12 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                             // Otherwise the flag will be removed.
                             // @formatter:on
                             type.getCurrentContext().remove("sale");
+
+                            // @formatter:off
+                            // Remove the trade time so that a following transaction
+                            // without its own "Handelsuhrzeit" does not inherit this one.
+                            // @formatter:on
+                            type.getCurrentContext().remove("time");
 
                             return new BuySellEntryItem(t);
                         });
@@ -279,7 +286,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("name", "currency", "wkn", "isin") //
-                                                        .match("^(?<note>Entgeltbelastung) (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+$") //
+                                                        .match("^(?<note>Entgeltbelastung) (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+\\s*$") //
                                                         .match("^[\\d]+ (?<wkn>[A-Z0-9]{6}) \\/ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) .*$")
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))),
                                         // @formatter:off
@@ -288,7 +295,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("name", "currency", "isin", "wkn") //
-                                                        .match("^(?<note>Entgeltbelastung) (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+$") //
+                                                        .match("^(?<note>Entgeltbelastung) (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+\\s*$") //
                                                         .match("^[\\d]+ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) \\/ (?<wkn>[A-Z0-9]{6}) .*$") //
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))))
 
@@ -296,14 +303,14 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Entgeltbelastung Templeton Growth (Euro) Fund 25,00 EUR 15,3000 EUR -1,634
                         // @formatter:on
                         .section("shares") //
-                        .match("^Entgeltbelastung .* ([\\-|\\+])?(?<shares>[\\.,\\d]+)$") //
+                        .match("^Entgeltbelastung .* ([\\-|\\+])?(?<shares>[\\.,\\d]+)\\s*$") //
                         .assign((t, v) -> t.setShares(asShares(v.get("shares"))))
 
                         // @formatter:off
                         // 2540818151 A1JA1R / LU0629459743 1,113832 USD 15.10.2019 17,187
                         // @formatter:on
                         .section("date") //
-                        .match("^.* (?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}) [\\.,\\d]+$") //
+                        .match("^.* (?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}) [\\.,\\d]+\\s*$") //
                         .assign((t, v) -> t.setDate(asDate(v.get("date"))))
 
                         .oneOf( //
@@ -312,7 +319,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("amount", "currency") //
-                                                        .match("^Verwahrentgelt Fonds ohne Abschlussfolgeprovision .* (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                                                        .match("^Verwahrentgelt Fonds ohne Abschlussfolgeprovision .* (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                                                         .assign((t, v) -> {
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -322,7 +329,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("currency", "amount") //
-                                                        .match("^Entgeltbelastung .* (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+$") //
+                                                        .match("^Entgeltbelastung .* (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+\\s*$") //
                                                         .assign((t, v) -> {
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -333,8 +340,8 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // 2540818151 A1JA1R / LU0629459743 1,113832 USD 15.10.2019 17,187
                         // @formatter:on
                         .section("gross", "baseCurrency", "exchangeRate", "termCurrency").optional() //
-                        .match("^Entgeltbelastung .* (?<gross>[\\.,\\d]+) (?<baseCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+$") //
-                        .match("^[\\d]+ .* \\/ .* (?<exchangeRate>[\\.,\\d]+) (?<termCurrency>[\\w]{3}) [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+$") //
+                        .match("^Entgeltbelastung .* (?<gross>[\\.,\\d]+) (?<baseCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+\\s*$") //
+                        .match("^[\\d]+ .* \\/ .* (?<exchangeRate>[\\.,\\d]+) (?<termCurrency>[\\w]{3}) [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+\\s*$") //
                         .assign((t, v) -> {
                             ExtrExchangeRate rate = asExchangeRate(v);
                             type.getCurrentContext().putType(rate);
@@ -350,8 +357,8 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // 2490658604 LU0114760746 / 941034 04.01.2016 10,848
                         // @formatter:on
                         .section("note1", "note2").optional() //
-                        .match("^(?<note1>Entgeltbelastung) .* (?<gross>[\\.,\\d]+) (?<currency>[\\w]{3}) [\\.,\\d]+ (?<fxCurrency>[\\w]{3}) \\-[\\.,\\d]+$") //
-                        .match("^(?<note2>[\\d]+) .* \\/ .* [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+$")
+                        .match("^(?<note1>Entgeltbelastung) .* (?<gross>[\\.,\\d]+) (?<currency>[\\w]{3}) [\\.,\\d]+ (?<fxCurrency>[\\w]{3}) \\-[\\.,\\d]+\\s*$") //
+                        .match("^(?<note2>[\\d]+) .* \\/ .* [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+\\s*$")
                         .assign((t, v) -> t.setNote("Auftrags-Nr. " + v.get("note2") + " | " + v.get("note1")))
 
                         .wrap(BuySellEntryItem::new);
@@ -380,7 +387,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("name", "currency", "wkn", "isin") //
-                                                        .match("^Entgeltbelastung (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+$") //
+                                                        .match("^Entgeltbelastung (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+\\s*$") //
                                                         .match("^[\\d]+ (?<wkn>[A-Z0-9]{6}) \\/ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) .*$") //
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))),
                                         // @formatter:off
@@ -388,7 +395,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // 2490658604 LU0114760746 / 941034 04.01.2016 10,848
                                         // @formatter:on
                                         section -> section.attributes("name", "currency", "isin", "wkn") //
-                                                        .match("^Entgeltbelastung (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+$") //
+                                                        .match("^Entgeltbelastung (?<name>.*) [\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3}) \\-[\\.,\\d]+\\s*$") //
                                                         .match("^[\\d]+ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) \\/ (?<wkn>[A-Z0-9]{6}) .*$") //
                                                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v))))
 
@@ -396,14 +403,14 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Entgeltbelastung Templeton Growth (Euro) Fund 25,00 EUR 15,3000 EUR -1,634
                         // @formatter:on
                         .section("shares") //
-                        .match("^Entgeltbelastung .* ([\\-|\\+])?(?<shares>[\\.,\\d]+)$") //
+                        .match("^Entgeltbelastung .* ([\\-|\\+])?(?<shares>[\\.,\\d]+)\\s*$") //
                         .assign((t, v) -> t.setShares(asShares(v.get("shares"))))
 
                         // @formatter:off
                         // 2540818151 A1JA1R / LU0629459743 1,113832 USD 15.10.2019 17,187
                         // @formatter:on
                         .section("date") //
-                        .match("^.* (?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}) [\\.,\\d]+$") //
+                        .match("^.* (?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4}) [\\.,\\d]+\\s*$") //
                         .assign((t, v) -> t.setDateTime(asDate(v.get("date"))))
 
                         .oneOf( //
@@ -412,7 +419,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("amount", "currency") //
-                                                        .match("^lfd\\. Verm.gensverwaltungsentgelt gem. separatem Auftrag (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                                                        .match("^lfd\\. Verm.gensverwaltungsentgelt gem. separatem Auftrag (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                                                         .assign((t, v) -> {
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -422,7 +429,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("currency", "amount") //
-                                                        .match("^Entgeltbelastung .* (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+$") //
+                                                        .match("^Entgeltbelastung .* (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+\\s*$") //
                                                         .assign((t, v) -> {
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -433,8 +440,8 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // 2540818151 A1JA1R / LU0629459743 1,113832 USD 15.10.2019 17,187
                         // @formatter:on
                         .section("gross", "baseCurrency", "exchangeRate", "termCurrency").optional() //
-                        .match("^Entgeltbelastung .* (?<gross>[\\.,\\d]+) (?<baseCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+$") //
-                        .match("^[\\d]+ .* \\/ .* (?<exchangeRate>[\\.,\\d]+) (?<termCurrency>[\\w]{3}) [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+$") //
+                        .match("^Entgeltbelastung .* (?<gross>[\\.,\\d]+) (?<baseCurrency>[\\w]{3}) [\\.,\\d]+ [\\w]{3} \\-[\\.,\\d]+\\s*$") //
+                        .match("^[\\d]+ .* \\/ .* (?<exchangeRate>[\\.,\\d]+) (?<termCurrency>[\\w]{3}) [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+\\s*$") //
                         .assign((t, v) -> {
                             ExtrExchangeRate rate = asExchangeRate(v);
                             type.getCurrentContext().putType(rate);
@@ -450,7 +457,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // 2490658604 LU0114760746 / 941034 04.01.2016 10,848
                         // @formatter:on
                         .section("note").optional() //
-                        .match("^(?<note>[\\d]+) .* \\/ .* [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+$") //
+                        .match("^(?<note>[\\d]+) .* \\/ .* [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} [\\.,\\d]+\\s*$") //
                         .assign((t, v) -> t.setNote("Auftrags-Nr. " + v.get("note")))
 
                         // @formatter:off
@@ -458,7 +465,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Depotführungsentgelt 25,00 EUR
                         // @formatter:on
                         .section("note").optional() //
-                        .match("^(?<note>Depotf.hrungsentgelt( [\\d]+)?) [\\.,\\d]+ [\\w]{3}$") //
+                        .match("^(?<note>Depotf.hrungsentgelt( [\\d]+)?) [\\.,\\d]+ [\\w]{3}\\s*$") //
                         .assign((t, v) -> t.setNote(concatenate(t.getNote(), v.get("note"), " | ")))
 
                         // @formatter:off
@@ -499,7 +506,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Ausschüttung               0,289000000 USD 0,03 EUR
                         // @formatter:on
                         .section("name", "wkn", "isin", "currency") //
-                        .match("^Fondsname (?<name>.*) Datum der Aussch.ttung [\\d]{2}\\.[\\d]{2}\\.[\\d]{4}$") //
+                        .match("^Fondsname (?<name>.*) Datum der Aussch.ttung [\\d]{2}\\.[\\d]{2}\\.[\\d]{4}\\s*$") //
                         .match("^WKN \\/ ISIN (?<wkn>[A-Z0-9]{6}) \\/ (?<isin>[A-Z]{2}[A-Z0-9]{9}[0-9]) .*$") //
                         .match("^Aussch.ttung( vor Teilfreistellung)? ([\\s]+)?[\\.,\\d]+ [\\w]{3} [\\.,\\d]+ (?<currency>[\\w]{3})") //
                         .assign((t, v) -> t.setSecurity(getOrCreateSecurity(v)))
@@ -508,14 +515,14 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Fondsgesellschaft iShares Anteilsbestand per 12.07.2018 0,0930 St.
                         // @formatter:on
                         .section("shares") //
-                        .match("^.* Anteilsbestand per [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} (?<shares>[\\.,\\d]+) St\\.$") //
+                        .match("^.* Anteilsbestand per [\\d]{2}\\.[\\d]{2}\\.[\\d]{4} (?<shares>[\\.,\\d]+) St\\.\\s*$") //
                         .assign((t, v) -> t.setShares(asShares(v.get("shares"))))
 
                         // @formatter:off
                         // Fondsname iShs S&P SmallCap 600 UCITS ET Datum der Ausschüttung 25.07.2018
                         // @formatter:on
                         .section("date") //
-                        .match("^Fondsname .* Datum der Aussch.ttung (?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4})$") //
+                        .match("^Fondsname .* Datum der Aussch.ttung (?<date>[\\d]{2}\\.[\\d]{2}\\.[\\d]{4})\\s*$") //
                         .assign((t, v) -> t.setDateTime(asDate(v.get("date"))))
 
                         .oneOf( //
@@ -525,7 +532,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("amount", "currency") //
-                                                        .match("^Folgender Betrag .* .berwiesen (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                                                        .match("^Folgender Betrag .* .berwiesen (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                                                         .assign((t, v) -> {
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -535,7 +542,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                                         // @formatter:on
                                         section -> section //
                                                         .attributes("currency", "amount") //
-                                                        .match("^zur Wiederanlage zur Verf.gung stehend (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                                                        .match("^zur Wiederanlage zur Verf.gung stehend (?<amount>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                                                         .assign((t, v) -> {
                                                             t.setCurrencyCode(asCurrencyCode(v.get("currency")));
                                                             t.setAmount(asAmount(v.get("amount")));
@@ -562,7 +569,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Kapitalertragsteuer               0,00 EUR
                         // @formatter:on
                         .section("tax", "currency").optional() //
-                        .match("^Kapitalertrags(s)?teuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^Kapitalertrags(s)?teuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> {
                             if (!type.getCurrentContext().getBoolean("sale"))
                                 processTaxEntries(t, v, type);
@@ -573,7 +580,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Abgeführte Kapitalertragsteuer 0,06 EUR
                         // @formatter:on
                         .section("tax", "currency").optional() //
-                        .match("^(Abgef.hrte|abgef.hrte) Kapitalertrags(s)?teuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^(Abgef.hrte|abgef.hrte) Kapitalertrags(s)?teuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> {
                             if (type.getCurrentContext().getBoolean("sale"))
                                 processTaxEntries(t, v, type);
@@ -583,7 +590,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Solidaritätszuschlag               0,00 EUR
                         // @formatter:on
                         .section("tax", "currency").optional() //
-                        .match("^Solidarit.tszuschlag ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^Solidarit.tszuschlag ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> {
                             if (!type.getCurrentContext().getBoolean("sale"))
                                 processTaxEntries(t, v, type);
@@ -594,7 +601,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Abgeführter Solidaritätszuschlag 0,00 EUR
                         // @formatter:on
                         .section("tax", "currency").optional() //
-                        .match("^(Abgef.hrter|abgef.hrter) Solidarit.tszuschlag ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^(Abgef.hrter|abgef.hrter) Solidarit.tszuschlag ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> {
                             if (type.getCurrentContext().getBoolean("sale"))
                                 processTaxEntries(t, v, type);
@@ -604,7 +611,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Kirchensteuer               0,00 EUR
                         // @formatter:on
                         .section("tax", "currency").optional() //
-                        .match("^Kirchensteuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^Kirchensteuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> {
                             if (!type.getCurrentContext().getBoolean("sale"))
                                 processTaxEntries(t, v, type);
@@ -615,7 +622,7 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Abgeführte Kirchensteuer 2 0,00 EUR
                         // @formatter:on
                         .section("tax", "currency").optional() //
-                        .match("^(Abgef.hrte|abgef.hrte) Kirchensteuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^(Abgef.hrte|abgef.hrte) Kirchensteuer ([\\s]+)?(?<tax>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> {
                             if (type.getCurrentContext().getBoolean("sale"))
                                 processTaxEntries(t, v, type);
@@ -630,21 +637,21 @@ public class FILFondbankPDFExtractor extends AbstractPDFExtractor
                         // Ausgabeaufschlag / Provision (0,00 %) 0,00 EUR
                         // @formatter:on
                         .section("fee", "currency").optional() //
-                        .match("^Ausgabeaufschlag \\/ Provision .* (?<fee>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^Ausgabeaufschlag \\/ Provision .* (?<fee>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> processFeeEntries(t, v, type))
 
                         // @formatter:off
                         // Additional Trading Costs 0,52 EUR
                         // @formatter:on
                         .section("fee", "currency").optional() //
-                        .match("^Additional Trading Costs (?<fee>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^Additional Trading Costs (?<fee>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> processFeeEntries(t, v, type))
 
                         // @formatter:off
                         // ETF Transaktionskosten FFB 0,00 EUR
                         // @formatter:on
                         .section("fee", "currency").optional() //
-                        .match("^ETF Transaktionskosten FFB (?<fee>[\\.,\\d]+) (?<currency>[\\w]{3})$") //
+                        .match("^ETF Transaktionskosten FFB (?<fee>[\\.,\\d]+) (?<currency>[\\w]{3})\\s*$") //
                         .assign((t, v) -> processFeeEntries(t, v, type));
     }
 }

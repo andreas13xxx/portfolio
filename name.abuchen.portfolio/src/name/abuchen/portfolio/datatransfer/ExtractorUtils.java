@@ -345,8 +345,12 @@ public class ExtractorUtils
 
     public static long convertToNumberLong(String value, Values<Long> valueType, String language, String country)
     {
-        var newNumberFormat = (DecimalFormat) NumberFormat
-                        .getInstance(Locale.forLanguageTag(language + "-" + country));
+        return convertToNumberLong(value, valueType, Locale.forLanguageTag(language + "-" + country));
+    }
+
+    public static long convertToNumberLong(String value, Values<Long> valueType, Locale locale)
+    {
+        var newNumberFormat = (DecimalFormat) NumberFormat.getInstance(locale);
 
         /**
          * @formatter:off
@@ -369,7 +373,7 @@ public class ExtractorUtils
          */
         value = trim(value).replaceAll("\\s", "");
 
-        if ("CH".equals(country))
+        if ("CH".equals(locale.getCountry()))
         {
             /***
              * The group separator for language format German, region
@@ -446,9 +450,111 @@ public class ExtractorUtils
         }
     }
 
+    public static long asShares(String value, Locale locale)
+    {
+        return convertToNumberLong(value, Values.Share, locale);
+    }
+    
     public static long asShares(String value, String language, String country)
     {
         return convertToNumberLong(value, Values.Share, language, country);
+    }
+
+    public static BigDecimal convertToNumberBigDecimal(String value, Values<Long> valueType, Locale locale)
+    {
+        return convertToNumberBigDecimal(value, valueType, locale.getLanguage(), locale.getCountry());
+    }
+
+    /**
+     * Guesses the locale of a formatted number so that it can be parsed with
+     * {@link #convertToNumberLong} / {@link #convertToNumberBigDecimal}.
+     *
+     * @formatter:off
+     * Detection order:
+     *  - Swiss apostrophe group separator (12'345.67)             -> de/CH
+     *  - both '.' and ',' present: the right-most one is decimal  -> '.' last = en/US, ',' last = de/DE
+     *  - a single separator that repeats (1.234.567)             -> it is the group separator: dots = de/DE, commas = en/US
+     *  - a single dot (0.5, 1.262, 63.726878)                    -> decimal point en/US
+     *  - a single comma otherwise (1,25)                         -> decimal point de/DE
+     *  - no separator                                            -> fallback
+     * @formatter:on
+     */
+    public static Locale guessNumberLocale(String value, Locale fallback)
+    {
+        var v = trim(value).replaceAll("\\s", "");
+
+        if (v.indexOf('\'') >= 0)
+            return Locale.of("de", "CH");
+
+        var hasDot = v.indexOf('.') >= 0;
+        var hasComma = v.indexOf(',') >= 0;
+
+        if (hasDot && hasComma)
+            return v.lastIndexOf('.') > v.lastIndexOf(',') ? Locale.US : Locale.GERMANY;
+
+        if (hasDot)
+        {
+            // repeated dot = grouping
+            if (v.indexOf('.') != v.lastIndexOf('.'))
+                return Locale.GERMANY;
+            return Locale.US;
+        }
+
+        if (hasComma)
+        {
+            // repeated comma = grouping
+            if (v.indexOf(',') != v.lastIndexOf(','))
+                return Locale.US;
+            return Locale.GERMANY;
+        }
+
+        return fallback;
+    }
+
+    /**
+     * Reliably detects the locale of a formatted number so that it can be
+     * parsed with {@link #convertToNumberLong} /
+     * {@link #convertToNumberBigDecimal}. Returns {@link Optional#empty()} if
+     * the value does not contain enough information.
+     */
+    public static Optional<Locale> detectNumberLocale(String value)
+    {
+        var v = trim(value).replaceAll("\\s", "");
+
+        if (v.indexOf('\'') >= 0)
+            return Optional.of(Locale.of("de", "CH"));
+
+        var hasDot = v.indexOf('.') >= 0;
+        var hasComma = v.indexOf(',') >= 0;
+
+        if (hasDot && hasComma)
+            return Optional.of(v.lastIndexOf('.') > v.lastIndexOf(',') ? Locale.US : Locale.GERMANY);
+
+        if (hasDot)
+        {
+            // repeated dot = grouping
+            if (v.indexOf('.') != v.lastIndexOf('.'))
+                return Optional.of(Locale.GERMANY);
+
+            if (v.length() - v.lastIndexOf('.') - 1 == 3)
+                return Optional.empty();
+
+            return Optional.of(Locale.US);
+        }
+
+        if (hasComma)
+        {
+            // repeated comma = grouping
+            if (v.indexOf(',') != v.lastIndexOf(','))
+                return Optional.of(Locale.US);
+
+            if (v.length() - v.lastIndexOf(',') - 1 == 3)
+                return Optional.empty();
+
+            return Optional.of(Locale.GERMANY);
+        }
+
+        return Optional.empty();
     }
 
     public static LocalDateTime asDate(String value, Locale... hints)
